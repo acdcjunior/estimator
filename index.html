@@ -1,0 +1,183 @@
+
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Referer</title>
+</head>
+<body>
+
+<script src="https://unpkg.com/vue"></script>
+<link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap/dist/css/bootstrap.min.css"/>
+<link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.css"/>
+<script src="//unpkg.com/babel-polyfill@latest/dist/polyfill.min.js"></script>
+<script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
+
+<style>
+.form-group {
+    margin-bottom: inherit;
+}
+</style>
+
+<div id="app">
+  <h1>{{ pesos[estimativa || 0] }}</h1>
+  <div v-for="comp of componentes">
+   <b-card no-body class="mb-1">
+      <b-card-header header-tag="header" class="p-1" role="tab">
+        <b-btn block variant="info" @click="comp.show = !comp.show">{{ comp.titulo }}</b-btn>
+      </b-card-header>
+      <b-collapse v-model="comp.show" id="comp.titulo">
+        <b-card-body>
+
+          <table class="card-text">
+            <tr v-for="parte of comp.partes">
+              <td width="250px">- {{ parte.titulo }}</td>
+              <td>
+                <b-form-group style="display: inline-block">
+                  <b-form-radio-group
+                    buttons :options="options_tipo_edicao" size="sm"
+                    button-variant="outline-success" 
+                    v-model="parte.valor_edicao"
+                  />
+                </b-form-group>
+                <b-form-group style="display: inline-block" v-show="parte.valor_edicao">
+                  <b-form-radio-group
+                    buttons :options="options_tipo_conhecimento" size="sm"
+                    button-variant="outline-primary" 
+                    v-model="parte.valor_conhecimento"
+                  />
+                </b-form-group>
+                <span v-if="parte.valor_edicao">
+                  {{ (parte.valor_edicao || 0) * (parte.valor_conhecimento || 1) || '' }}
+                  <b-button variant="danger" size="sm" @click="clear(parte)">×</b-button>
+                </span>
+              </td>
+            </tr>
+          </table>
+    
+        </b-card-body>
+      </b-collapse>
+    </b-card>
+  </div>
+</div>
+
+<script>
+new Vue({
+  el: '#app',
+  data: {
+         // 0,   1  2  3  4  5  6  7  8,  9, 10, 11, 12, 13, 14+ = 20
+  	pesos: [0.5, 1, 2, 3, 5, 5, 8, 8, 8, 10, 10, 13, 13, 13],
+  	options_tipo_edicao: [
+    	{text: 'Editar Existente', value: 1}, {text: 'Criar Novo', value: 3}
+    ],
+  	options_tipo_conhecimento: [
+    	{text: 'Conhecido', value: 1}, {text: 'Desconhecido', value: 2}, {text: 'Desafio', value: 4}
+    ],
+    componentes: [
+    	{
+      	titulo: 'Vue',
+        partes: [
+        	{titulo: 'Componente Vue'},
+          {titulo: 'Roteador'},
+          {titulo: 'Outro'}
+        ]
+      },
+    	{
+      	titulo: 'Camada de Apresentação JSF',
+        partes: [
+          {titulo: 'XHTML de tela principal'},
+          {titulo: 'XHTML de coluna'},
+          {titulo: 'Vue (em XHTML)'},
+        	{titulo: 'MBean'},
+          {titulo: 'Bean'},
+          {titulo: 'Fábrica de Bean'},
+        ]
+      },
+    	{
+      	titulo: 'Camada de Apresentação REST',
+        partes: [
+        	{titulo: 'Controller'}
+        ]
+      },
+    	{
+      	titulo: 'Camada de Aplicação',
+        partes: [
+        	{titulo: 'Serviço de Aplicação'},
+          {titulo: 'Item'},
+          {titulo: 'Coluna'},
+          {titulo: 'Fábrica de Item'},
+          {titulo: 'Fábrica de Coluna'}
+        ]
+      },
+    	{
+      	titulo: 'Camada de Negócio',
+        partes: [
+        	{titulo: 'Entidade'},
+        	{titulo: 'Serviço de Negócio'},
+          {titulo: 'Regra'},
+          {titulo: 'Pré/Pós Validador'},
+          {titulo: 'E-mail (com Observador)'},
+          {titulo: 'Repositório'},
+          {titulo: 'Serviço/Repositório REST Externo'}
+        ]
+      },
+    	{
+      	titulo: 'Scripts',
+        partes: [
+        	{titulo: 'e-Gestao'},
+        	{titulo: 'Funcao Computacional'}
+        ]
+      },
+    	{
+      	titulo: 'Infraestrutura',
+        partes: [
+        	{titulo: 'Configurar Jenkins'},
+        	{titulo: 'Configurar Sonar'},
+          {titulo: 'Novo Repositório'},
+          {titulo: 'Novo Owner de Banco'},
+          {titulo: 'Novo Recurso Computacional/Usuário de Sistema'},
+          {titulo: 'Outras Configurações'},
+        ]
+      }
+    ]
+  },
+  mounted() {
+  	this.componentes.forEach(comp => {
+      Vue.set(comp, 'show', false);
+      comp.partes.forEach(parte => {
+        Vue.set(parte, 'valor_edicao', null);
+        Vue.set(parte, 'valor_conhecimento', 1);
+      })
+    });
+    
+    for (let i = 14; i <= 20; i++) this.pesos[i] = 20;
+    for (let i = 21; i <= 40; i++) this.pesos[i] = 40;
+    for (let i = 41; i <= 999; i++) this.pesos[i] = '∞';
+  },
+  methods: {
+  	clear(parte) {
+    	parte.valor_edicao = 0;
+      parte.valor_conhecimento = 1; 
+    }
+  },
+  computed: {
+  	estimativa() {
+    	return this.componentes.reduce((sum, comp) => {
+      	return sum + comp.partes.reduce((sum, parte) => {
+          if (parte.valor_edicao && parte.valor_conhecimento)
+      			return sum + (parte.valor_edicao || 0) * (parte.valor_conhecimento || 1);
+          else
+          	return sum;
+      	}, 0);
+      }, 0);
+    }
+  }
+});
+</script>
+
+
+</body>
+</html>
