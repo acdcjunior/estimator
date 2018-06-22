@@ -18,13 +18,59 @@
 
 <style>
 .form-group {
-    margin-bottom: inherit;
+    margin-bottom: 2px;
+}
+.peso-individual {
+  display: inline-block;
+  width: 30px;
+  padding-right: 1px;
+  font-weight: bold;
+  text-align: center;
+  border: 2px solid black;
+  border-radius: 15px;
+  height: 28px;
+  line-height: 22px;
+  margin-top: 3px;
+}
+.estimativa {
+  transition:all 300ms ease;
+  user-select: none;
+  cursor: pointer;
+  width: 37px;
+  height: 37px;
+  border-radius: 50%;
+  font-size: 20px;
+  color: #fff;
+  line-height: 36px;
+  text-align: center;
+  background: #000;
+  position: fixed;
+  top: 0.3em;
+  left: 0.3em;
+  z-index: 999;
+}
+.reset-open {
+  width: 300px;
+  height: 40px;
+  border-radius: 10px;
+}
+.reset-buttons-open {
+  height: 40px;
 }
 </style>
 
 <div id="app">
-  <h1>{{ pesos[estimativa || 0] }}</h1>
-  <div v-for="comp of componentes">
+  <div class="estimativa" @click="abrirResetPanel" :class="{'reset-open': reset_flag}">
+    {{ pesos[estimativa || 0] }}
+     <transition
+    name="bounce" >
+    <div v-if="reset_flag" style="display: inline-block">
+      &nbsp; Resetar? <b-btn size="sm" @click="resetar">Sim</b-btn> <b-button size="sm">Não</b-button>
+    </div>
+    </transition>
+  </div>
+  <br><br>
+  <div v-for="comp of componentes" @click="reset_flag = false">
    <b-card no-body class="mb-1">
       <b-card-header header-tag="header" class="p-1" role="tab">
         <b-btn block variant="info" @click="comp.show = !comp.show">{{ comp.titulo }}</b-btn>
@@ -32,10 +78,10 @@
       <b-collapse v-model="comp.show" id="comp.titulo">
         <b-card-body>
 
-          <table class="card-text">
-            <tr v-for="parte of comp.partes">
-              <td width="250px">- {{ parte.titulo }}</td>
-              <td>
+          <b-list-group class="card-text">
+            <b-list-group-item v-for="parte of comp.partes">
+              <span style="display: inline-block; width: 250px">{{ parte.titulo }}</span>
+              
                 <b-form-group style="display: inline-block">
                   <b-form-radio-group
                     buttons :options="options_tipo_edicao" size="sm"
@@ -51,12 +97,12 @@
                   />
                 </b-form-group>
                 <span v-if="parte.valor_edicao">
-                  {{ (parte.valor_edicao || 0) * (parte.valor_conhecimento || 1) || '' }}
+                  <span class="peso-individual">{{ (parte.valor_edicao || 0) * (parte.valor_conhecimento || 1) || '' }}</span>
                   <b-button variant="danger" size="sm" @click="clear(parte)">×</b-button>
                 </span>
-              </td>
-            </tr>
-          </table>
+              
+            </b-list-group-item>
+          </b-list-group>
     
         </b-card-body>
       </b-collapse>
@@ -64,12 +110,15 @@
   </div>
 </div>
 
+
 <script>
 new Vue({
   el: '#app',
   data: {
          // 0,   1  2  3  4  5  6  7  8,  9, 10, 11, 12, 13, 14+ = 20
   	pesos: [0.5, 1, 2, 3, 5, 5, 8, 8, 8, 10, 10, 13, 13, 13],
+    reset_flag: false,
+    reset_buttons_flag: false,
   	options_tipo_edicao: [
     	{text: 'Editar Existente', value: 1}, {text: 'Criar Novo', value: 3}
     ],
@@ -145,14 +194,7 @@ new Vue({
     ]
   },
   mounted() {
-  	this.componentes.forEach(comp => {
-      Vue.set(comp, 'show', false);
-      comp.partes.forEach(parte => {
-        Vue.set(parte, 'valor_edicao', null);
-        Vue.set(parte, 'valor_conhecimento', 1);
-      })
-    });
-    
+  	this.resetar();
     for (let i = 14; i <= 20; i++) this.pesos[i] = 20;
     for (let i = 21; i <= 40; i++) this.pesos[i] = 40;
     for (let i = 41; i <= 999; i++) this.pesos[i] = '∞';
@@ -161,6 +203,24 @@ new Vue({
   	clear(parte) {
     	parte.valor_edicao = 0;
       parte.valor_conhecimento = 1; 
+    },
+    resetar() {
+      this.componentes.forEach(comp => {
+        Vue.set(comp, 'show', false);
+        comp.partes.forEach(parte => {
+          Vue.set(parte, 'valor_edicao', null);
+          Vue.set(parte, 'valor_conhecimento', 1);
+        })
+      });
+    },
+    abrirResetPanel() {
+    	this.reset_flag = !this.reset_flag;
+      //this.resetar();
+    },
+    ball() {
+    console.log('ball', this.reset_flag);
+    this.reset_flag = false;
+    console.log('ball', this.reset_flag);
     }
   },
   computed: {
@@ -175,9 +235,28 @@ new Vue({
       }, 0);
     }
   }
-});
+})
 </script>
 
+<style>
+.bounce-enter-active {
+  animation: bounce-in .5s;
+}
+.bounce-leave-active {
+  animation: bounce-in .0s reverse;
+}
+@keyframes bounce-in {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.5);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+</style>
 
 </body>
 </html>
