@@ -10,7 +10,7 @@
   <meta property="og:title" content="Sesol-2 Story Points Estimator" /><!-- 35 -->
   <meta property="og:url" content="https://acdcjunior.github.io/estimator/" />
   <meta property="og:description" content="Sesol-2 Story Points Estimator"><!-- 65 -->
-  <meta property="og:image" content="https://acdcjunior.github.io/estimator/calc-icon.jpg">
+  <meta property="og:image" content="https://acdcjunior.github.io/estimator/icon.png">
   <meta property="og:type" content="website" />
   <meta property="og:locale" content="pt_BR" />
 
@@ -18,9 +18,8 @@
   <meta name="format-detection" content="telephone=no">
   <meta name="msapplication-tap-highlight" content="no">
 
-  <link rel="icon" type="image/x-icon" href="https://acdcjunior.github.io/estimator/calc-icon.jpg">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#4e8ef7">
+  <link rel="icon" type="image/x-icon" href="icon.png">
+  <meta name="theme-color" content="#17a2b8">
     
   <title>Sesol-2 Story Points Estimator</title>
 </head>
@@ -48,6 +47,27 @@
   line-height: 22px;
   margin-top: 3px;
 }
+/*@media (max-width: 600px) {*/
+  div.estimativa {
+    top: 0.3em;
+    left: 0.3em;
+    width: 80px;
+    height: 80px;
+    line-height: 79px;
+  }
+  div.estimativa.reset-open {
+    width: 300px;
+    height: 83px;
+  }
+/*}*/
+@media (min-width: 600px) {
+  .btn.btn-variavel {
+    padding: .25rem .5rem;
+    font-size: .875rem;
+    line-height: 1.5;
+    border-radius: .2rem;
+  }
+}
 .estimativa {
   transition:all 300ms ease;
   user-select: none;
@@ -55,7 +75,7 @@
   width: 37px;
   height: 37px;
   border-radius: 50%;
-  font-size: 20px;
+  font-size: xx-large;
   color: #fff;
   line-height: 36px;
   text-align: center;
@@ -65,7 +85,7 @@
   left: 0.3em;
   z-index: 999;
 }
-.reset-open {
+.estimativa.reset-open {
   width: 300px;
   height: 40px;
   border-radius: 10px;
@@ -73,16 +93,43 @@
 .reset-buttons-open {
   height: 40px;
 }
+.bounce-enter-active {
+  animation: bounce-in .5s;
+}
+.bounce-leave-active {
+  animation: bounce-in .0s reverse;
+}
+@keyframes bounce-in {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.5);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.exata {
+  display: inline-block;
+  position: absolute;
+  top: 27px;
+  right: 0;
+  font-size: 50%;
+  text-align: center;
+  width: 80px;
+  color: #8e8e8e;
+}
 </style>
 
 <div id="app">
-  <div class="estimativa" @click="abrirResetPanel" :class="{'reset-open': reset_flag}">
-    {{ pesos[estimativa || 0] }}
-     <transition
-    name="bounce" >
-    <div v-if="reset_flag" style="display: inline-block">
-      &nbsp; Resetar? <b-btn size="sm" @click="resetar">Sim</b-btn> <b-button size="sm">Não</b-button>
-    </div>
+  <div class="estimativa" @click="abrirResetPanel" :class="{'reset-open': reset_flag, 'bounce-enter-active': bounce_estimativa_flag}">
+    {{ peso }}
+    <span class="exata" v-if="estimativa && peso !== estimativa">{{ estimativa }}</span>
+    <transition name="bounce">
+      <div v-if="reset_flag" style="display: inline-block">
+        &nbsp; Reiniciar? <b-btn size="sm" @click="resetar">Sim</b-btn> <b-btn>Não</b-btn>
+      </div>
     </transition>
   </div>
   <br><br>
@@ -100,14 +147,14 @@
               
                 <b-form-group style="display: inline-block">
                   <b-form-radio-group
-                    buttons :options="options_tipo_edicao" size="sm"
+                    buttons :options="options_tipo_edicao" size="variavel"
                     button-variant="outline-success" 
                     v-model="parte.valor_edicao"
                   />
                 </b-form-group>
                 <b-form-group style="display: inline-block" v-show="parte.valor_edicao">
                   <b-form-radio-group
-                    buttons :options="options_tipo_conhecimento" size="sm"
+                    buttons :options="options_tipo_conhecimento" size="variavel"
                     button-variant="outline-primary" 
                     v-model="parte.valor_conhecimento"
                   />
@@ -134,7 +181,7 @@ new Vue({
          // 0,   1  2  3  4  5  6  7  8,  9, 10, 11, 12, 13, 14+ = 20
   	pesos: [0.5, 1, 2, 3, 5, 5, 8, 8, 8, 10, 10, 13, 13, 13],
     reset_flag: false,
-    reset_buttons_flag: false,
+    bounce_estimativa_flag: false,
   	options_tipo_edicao: [
     	{text: 'Editar Existente', value: 1}, {text: 'Criar Novo', value: 3}
     ],
@@ -217,7 +264,7 @@ new Vue({
   },
   methods: {
   	clear(parte) {
-    	parte.valor_edicao = 0;
+      parte.valor_edicao = 0;
       parte.valor_conhecimento = 1; 
     },
     resetar() {
@@ -230,18 +277,13 @@ new Vue({
       });
     },
     abrirResetPanel() {
-    	this.reset_flag = !this.reset_flag;
+      this.reset_flag = !this.reset_flag;
       //this.resetar();
-    },
-    ball() {
-    console.log('ball', this.reset_flag);
-    this.reset_flag = false;
-    console.log('ball', this.reset_flag);
     }
   },
   computed: {
   	estimativa() {
-    	return this.componentes.reduce((sum, comp) => {
+      return this.componentes.reduce((sum, comp) => {
       	return sum + comp.partes.reduce((sum, parte) => {
           if (parte.valor_edicao && parte.valor_conhecimento)
       			return sum + (parte.valor_edicao || 0) * (parte.valor_conhecimento || 1);
@@ -249,30 +291,19 @@ new Vue({
           	return sum;
       	}, 0);
       }, 0);
+    },
+    peso() {
+  	  return this.pesos[this.estimativa];
+    }
+  },
+  watch: {
+    peso() {
+      this.bounce_estimativa_flag = true;
+      setTimeout(() => { this.bounce_estimativa_flag = false; }, 500);
     }
   }
 })
 </script>
-
-<style>
-.bounce-enter-active {
-  animation: bounce-in .5s;
-}
-.bounce-leave-active {
-  animation: bounce-in .0s reverse;
-}
-@keyframes bounce-in {
-  0% {
-    transform: scale(0);
-  }
-  50% {
-    transform: scale(1.5);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-</style>
 
 </body>
 </html>
