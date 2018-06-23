@@ -58,11 +58,11 @@
     }
 
     div.estimativa.reset-open {
-        width: 300px;
+        width: 400px;
         height: 83px;
     }
-
     /*}*/
+
     @media (min-width: 600px) {
         .btn.btn-variavel {
             padding: .25rem .5rem;
@@ -135,7 +135,7 @@
 <div id="app">
     <div class="estimativa" @click="abrirResetPanel" :class="{'reset-open': reset_flag, 'bounce-enter-active': bounce_estimativa_flag}">
         {{ peso }}
-        <span class="exata" v-if="estimativa && peso !== estimativa">{{ estimativa }}</span>
+        <span class="exata" v-if="!reset_flag && estimativa && peso !== estimativa">{{ estimativa }}</span>
         <transition name="bounce">
             <div v-if="reset_flag" style="display: inline-block">
                 &nbsp; Reiniciar?
@@ -191,7 +191,7 @@
         el: '#app',
         data: {
             // 0,   1  2  3  4  5  6  7  8,  9, 10, 11, 12, 13, 14+ = 20
-            pesos: [0.5, 1, 2, 3, 5, 5, 8, 8, 8, 10, 10, 13, 13, 13],
+            pesos: ['?', 1, 2, 3, 5, 5, 8, 8, 8, 10, 10, 13, 13, 13],
             reset_flag: false,
             bounce_estimativa_flag: false,
             options_tipo_edicao: [
