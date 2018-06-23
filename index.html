@@ -58,7 +58,7 @@
     }
 
     div.estimativa.reset-open {
-        width: 400px;
+        width: 356px;
         height: 83px;
     }
     /*}*/
@@ -131,13 +131,25 @@
         color: #8e8e8e;
     }
 
+    .slogan2 {
+        float: right;
+        padding: 5px 10px;
+        color: lightgrey;
+        line-height: 1em;
+        text-align: right;
+        width: 230px;
+    }
+    .slogan {
+        height: 45px;
+    }
+
     [v-cloak] { display: none; }
 </style>
 
 <div id="app" v-cloak>
     <div class="estimativa" @click="abrirResetPanel" :class="{'reset-open': reset_flag, 'bounce-enter-active': bounce_estimativa_flag}">
-        {{ peso }}
-        <span class="exata" v-if="!reset_flag && estimativa && peso !== estimativa">{{ estimativa }}</span>
+        <span v-if="reset_flag">(</span>{{ peso }}<span v-if="reset_flag">)</span>
+        <span class="exata" v-if="false && !reset_flag && estimativa && peso !== estimativa">{{ estimativa }}</span>
         <transition name="bounce">
             <div v-if="reset_flag" style="display: inline-block">
                 &nbsp; Reiniciar?
@@ -146,8 +158,10 @@
             </div>
         </transition>
     </div>
-    <div style="float: right; padding: 5px 10px; color: lightgrey; line-height: 0.9em; text-align: right">
-        Sesol-2 Story Points <i>Estimator</i><br><i style="font-size: 12px">"Uma estimativa para todos os seus problemas acabarem!"</i>
+    <div class="slogan">
+        <div class="slogan2">
+            Sesol-2 Story Points <i>Estimator</i><br><i style="font-size: 12px">"Uma estimativa para todos os seus problemas acabarem!"</i>
+        </div>
     </div>
     <br><br>
     <div v-for="comp of componentes" @click="reset_flag = false">
@@ -296,8 +310,7 @@
                 });
             },
             abrirResetPanel() {
-                this.reset_flag = !this.reset_flag;
-                //this.resetar();
+                this.reset_flag = !this.reset_flag && this.peso !== '?';
             }
         },
         computed: {
