@@ -24,7 +24,11 @@
 </head>
 <body>
 
+<script src="https://www.gstatic.com/firebasejs/5.1.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/5.1.0/firebase-database.js"></script>
 <script src="https://unpkg.com/vue@2/dist/vue.min.js"></script>
+<script src="https://unpkg.com/vuefire"></script>
+
 <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap/dist/css/bootstrap.min.css"/>
 <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.css"/>
 <script src="https://unpkg.com/babel-polyfill@latest/dist/polyfill.min.js"></script>
@@ -103,11 +107,9 @@
     .bounce-enter-active {
         animation: bounce-in .5s;
     }
-
     .bounce-leave-active {
         animation: bounce-in .0s reverse;
     }
-
     @keyframes bounce-in {
         0% {
             transform: scale(0);
@@ -117,6 +119,30 @@
         }
         100% {
             transform: scale(1);
+        }
+    }
+    .bounce-quick-enter-active {
+        animation: bounce-in .2s;
+    }
+    .bounce-quick-leave-active {
+        animation: bounce-in .2s reverse;
+    }
+
+    .slide-enter-active {
+        animation: slide-in .2s;
+    }
+    .slide-leave-active {
+        animation: slide-in .2s reverse;
+    }
+    @keyframes slide-in {
+        0% {
+            transform: scale(0, 1);
+        }
+        50% {
+            transform: scale(0.5, 1);
+        }
+        100% {
+            transform: scale(1, 1);
         }
     }
 
@@ -142,72 +168,105 @@
     .slogan {
         height: 45px;
     }
+    .barra-progresso {
+        width: 20%;
+        position: fixed;
+        top: 65px;
+        z-index: 1;
+        left: 40%;
+    }
+    .tem-parte-selecionada {
+        color: yellow;
+    }
 
     [v-cloak] { display: none; }
 </style>
 
 <div id="app" v-cloak>
-    <div class="estimativa" @click="abrirResetPanel" :class="{'reset-open': reset_flag, 'bounce-enter-active': bounce_estimativa_flag}">
-        <span v-if="reset_flag">(</span>{{ peso }}<span v-if="reset_flag">)</span>
-        <span class="exata" v-if="false && !reset_flag && estimativa && peso !== estimativa">{{ estimativa }}</span>
-        <transition name="bounce">
-            <div v-if="reset_flag" style="display: inline-block">
-                &nbsp; Reiniciar?
-                <b-btn size="sm" @click="resetar">Sim</b-btn>
-                <b-btn>Não</b-btn>
-            </div>
-        </transition>
-    </div>
+    <transition name="bounce">
+        <div v-if="categorias.length" class="estimativa" @click="abrirResetPanel" :class="{'reset-open': reset_flag, 'bounce-enter-active': bounce_estimativa_flag}">
+            <span v-if="reset_flag">(</span>{{ peso }}<span v-if="reset_flag">)</span>
+            <span class="exata" v-if="false && !reset_flag && estimativa && peso !== estimativa">{{ estimativa }}</span>
+            <transition name="bounce">
+                <div v-if="reset_flag" style="display: inline-block">
+                    &nbsp; Reiniciar?
+                    <b-btn size="sm" @click="resetar">Sim</b-btn>
+                    <b-btn>Não</b-btn>
+                </div>
+            </transition>
+        </div>
+    </transition>
     <div class="slogan">
         <div class="slogan2">
             Sesol-2 Story Points <i>Estimator</i><br><i style="font-size: 12px">"Uma estimativa para todos os seus problemas acabarem!"</i>
         </div>
     </div>
     <br><br>
-    <div v-for="comp of componentes" @click="reset_flag = false">
-        <b-card no-body class="mb-1">
-            <b-card-header header-tag="header" class="p-1" role="tab">
-                <b-btn block variant="info" @click="comp.show = !comp.show">{{ comp.titulo }}</b-btn>
-            </b-card-header>
-            <b-collapse v-model="comp.show" id="comp.titulo">
-                <b-card-body>
+    <transition name="bounce-quick">
+        <div v-if="barra_progresso < 120" class="mx-auto barra-progresso">
+            <b-progress :value="barra_progresso" variant="info" striped :animated="true" class="mb-2"></b-progress>
+        </div>
+    </transition>
 
-                    <b-list-group class="card-text">
-                        <b-list-group-item v-for="parte of comp.partes" :key="comp.titulo + parte.titulo">
-                            <span style="display: inline-block; width: 250px">{{ parte.titulo }}</span>
+    <transition name="slide">
+        <div v-if="categorias.length">
+            <div v-for="categoria of categorias" @click="reset_flag = false">
+                <b-card no-body class="mb-1">
+                    <b-card-header header-tag="header" class="p-1" role="tab">
+                        <b-btn :class="{'tem-parte-selecionada': temParteSelecionada[categoria['.key']]}" block variant="info"
+                               @click="show_componente[categoria['.key']] = !show_componente[categoria['.key']]">{{ categoria.titulo }}</b-btn>
+                    </b-card-header>
+                    <b-collapse v-model="show_componente[categoria['.key']]" id="categoria.titulo">
+                        <b-card-body>
 
-                            <b-form-group style="display: inline-block">
-                                <b-form-radio-group
-                                        buttons :options="options_tipo_edicao" size="variavel"
-                                        button-variant="outline-success"
-                                        v-model="parte.valor_edicao"
-                                />
-                            </b-form-group>
-                            <b-form-group style="display: inline-block" v-show="parte.valor_edicao">
-                                <b-form-radio-group
-                                        buttons :options="options_tipo_conhecimento" size="variavel"
-                                        button-variant="outline-primary"
-                                        v-model="parte.valor_conhecimento"
-                                />
-                            </b-form-group>
-                            <span v-if="parte.valor_edicao">
-                  <span class="peso-individual">{{ (parte.valor_edicao || 0) * (parte.valor_conhecimento || 1) || '' }}</span>
-                  <b-button variant="danger" size="sm" @click="clear(parte)">×</b-button>
-                </span>
+                            <b-list-group class="card-text">
+                                <b-list-group-item v-for="(parte, parteKey) of categoria.partes" :key="categoria.titulo + parte.titulo">
+                                    <span style="display: inline-block; width: 250px">{{ parte.titulo }}</span>
 
-                        </b-list-group-item>
-                    </b-list-group>
+                                    <b-form-group style="display: inline-block">
+                                        <b-form-radio-group
+                                                buttons :options="options_tipo_edicao" size="variavel"
+                                                button-variant="outline-success"
+                                                :checked="parte.valor_edicao"
+                                                @change="updateParte(categoria, parteKey, 'valor_edicao', $event)"
+                                        />
+                                    </b-form-group>
+                                    <b-form-group style="display: inline-block" v-show="parte.valor_edicao">
+                                        <b-form-radio-group
+                                                buttons :options="options_tipo_conhecimento" size="variavel"
+                                                button-variant="outline-primary"
+                                                :checked="parte.valor_conhecimento"
+                                                @change="updateParte(categoria, parteKey, 'valor_conhecimento', $event)"
+                                        />
+                                    </b-form-group>
+                                    <span v-if="parte.valor_edicao">
+                                      <span class="peso-individual">{{ (parte.valor_edicao || 0) * (parte.valor_conhecimento || 1) || '' }}</span>
+                                      <b-button variant="danger" size="sm" @click="clear(categoria, parteKey)">×</b-button>
+                                    </span>
 
-                </b-card-body>
-            </b-collapse>
-        </b-card>
-    </div>
+                                </b-list-group-item>
+                            </b-list-group>
+
+                        </b-card-body>
+                    </b-collapse>
+                </b-card>
+            </div>
+        </div>
+    </transition>
 </div>
 
 
 <script>
+    const db = firebase.initializeApp({
+        databaseURL: 'https://sesol-2-estimator.firebaseio.com'
+    }).database();
+    const partesRef = db.ref('partes');
+
     new Vue({
         el: '#app',
+        firebase: {
+            categorias: partesRef
+        },
         data: {
             // 0,   1  2  3  4  5  6  7  8,  9, 10, 11, 12, 13, 14+ = 20
             pesos: ['?', 1, 2, 3, 5, 5, 8, 8, 8, 10, 10, 13, 13, 13],
@@ -219,104 +278,65 @@
             options_tipo_conhecimento: [
                 {text: 'Conhecido', value: 1}, {text: 'Desconhecido', value: 2}, {text: 'Desafio', value: 4}
             ],
-            componentes: [
-                {
-                    titulo: 'Camada de Apresentação JSF',
-                    partes: [
-                        {titulo: 'XHTML de tela principal'},
-                        {titulo: 'XHTML de coluna'},
-                        {titulo: 'Vue (em XHTML)'},
-                        {titulo: 'MBean'},
-                        {titulo: 'Bean'},
-                        {titulo: 'Fábrica de Bean'},
-                    ]
-                },
-                {
-                    titulo: 'Camada de Apresentação REST',
-                    partes: [
-                        {titulo: 'Controller'}
-                    ]
-                },
-                {
-                    titulo: 'Camada de Aplicação',
-                    partes: [
-                        {titulo: 'Serviço de Aplicação'},
-                        {titulo: 'Item'},
-                        {titulo: 'Coluna'},
-                        {titulo: 'Fábrica de Item'},
-                        {titulo: 'Fábrica de Coluna'}
-                    ]
-                },
-                {
-                    titulo: 'Camada de Negócio',
-                    partes: [
-                        {titulo: 'Entidade'},
-                        {titulo: 'Serviço de Negócio'},
-                        {titulo: 'Regra'},
-                        {titulo: 'Pré/Pós Validador'},
-                        {titulo: 'E-mail (com Observador)'},
-                        {titulo: 'Repositório'},
-                        {titulo: 'Serviço/Repositório REST Externo'}
-                    ]
-                },
-                {
-                    titulo: 'Vue',
-                    partes: [
-                        {titulo: 'Componente Vue'},
-                        {titulo: 'Vuex'},
-                        {titulo: 'Configurar Router'},
-                        {titulo: 'Outro'}
-                    ]
-                },
-                {
-                    titulo: 'Scripts',
-                    partes: [
-                        {titulo: 'e-Gestao'},
-                        {titulo: 'Funcao Computacional'}
-                    ]
-                },
-                {
-                    titulo: 'Infraestrutura',
-                    partes: [
-                        {titulo: 'Atualizar Versões de Bibliotecas'},
-                        {titulo: 'Configurar Jenkins'},
-                        {titulo: 'Configurar Sonar'},
-                        {titulo: 'Novo Repositório'},
-                        {titulo: 'Novo Owner de Banco'},
-                        {titulo: 'Novo Recurso Computacional/Usuário de Sistema'},
-                        {titulo: 'Outras Configurações'},
-                    ]
-                }
-            ]
+            categorias: [], // para que a prop firebase seja reativa
+            show_componente: {},
+            barra_progresso: 0
         },
         mounted() {
-            this.resetar();
+            this.ocultarCategorias();
+            this.ligarBarraProgresso();
             for (let i = 14; i <= 20; i++) this.pesos[i] = 20;
             for (let i = 21; i <= 40; i++) this.pesos[i] = 40;
             for (let i = 41; i <= 999; i++) this.pesos[i] = '∞';
         },
         methods: {
-            clear(parte) {
-                parte.valor_edicao = 0;
-                parte.valor_conhecimento = 1;
+            ligarBarraProgresso() {
+                setTimeout(() => {
+                    this.barra_progresso = 70;
+                    let interval = setInterval(() => {
+                        this.barra_progresso += 5;
+                        if (this.barra_progresso < 100 && this.categorias.length) {
+                            this.barra_progresso = 100;
+                        }
+                        if (this.barra_progresso >= 120) {
+                            clearInterval(interval);
+                        }
+                    }, 100);
+                }, 500);
+            },
+            ocultarCategorias() {
+                this.categorias.forEach(categoria => {
+                    Vue.set(this.show_componente, categoria['.key'], false);
+                });
             },
             resetar() {
-                this.componentes.forEach(comp => {
-                    Vue.set(comp, 'show', false);
-                    comp.partes.forEach(parte => {
-                        Vue.set(parte, 'valor_edicao', null);
-                        Vue.set(parte, 'valor_conhecimento', 1);
+                this.ocultarCategorias();
+                this.categorias.forEach(categoria => {
+                    Object.keys(categoria.partes).forEach(parteKey => {
+                        this.clear(categoria, parteKey);
                     })
                 });
             },
             abrirResetPanel() {
                 this.reset_flag = !this.reset_flag && this.peso !== '?';
+            },
+            updateParte(categoria, parteKey, campo, valor) {
+                partesRef.child(`${categoria['.key']}/partes/${parteKey}/${campo}`).set(valor)
+            },
+            clear(categoria, parteKey) {
+                this.updateParte(categoria, parteKey, 'valor_edicao', 0);
+                this.updateParte(categoria, parteKey, 'valor_conhecimento', 1);
             }
         },
         computed: {
+            temParteSelecionada() {
+                return this.categorias.reduce((categoriasPartesSelecionadas, categoria) => (
+                    {...categoriasPartesSelecionadas, [categoria['.key']]: Object.values(categoria.partes).some(parte => parte.valor_edicao)}
+                ), {});
+            },
             estimativa() {
-                return this.componentes.reduce((sum, comp) => {
-                    return sum + comp.partes.reduce((sum, parte) => {
+                return this.categorias.reduce((sum, categoria) => {
+                    return sum + Object.values(categoria.partes).reduce((sum, parte) => {
                         if (parte.valor_edicao && parte.valor_conhecimento)
                             return sum + (parte.valor_edicao || 0) * (parte.valor_conhecimento || 1);
                         else
