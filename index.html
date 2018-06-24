@@ -24,6 +24,9 @@
 </head>
 <body>
 
+<script src="https://unpkg.com/crypto-js@3.1.9-1/crypto-js.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="cards.js"></script>
 <script src="https://www.gstatic.com/firebasejs/5.1.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/5.1.0/firebase-database.js"></script>
 <script src="https://unpkg.com/vue@2/dist/vue.min.js"></script>
@@ -88,11 +91,6 @@
         line-height: 79px;
     }
 
-    div.estimativa.reset-open {
-        width: 340px;
-        height: 83px;
-    }
-
     @media (min-width: 600px) {
         .btn.btn-variavel {
             padding: .25rem .5rem;
@@ -131,13 +129,22 @@
     }
 
     .estimativa.reset-open {
-        width: 300px;
-        height: 40px;
+        width: 340px;
+        height: 250px;
         border-radius: 10px;
     }
 
     .reset-buttons-open {
         height: 40px;
+    }
+    .peso-open {
+        display: inline-block;
+        float: left;
+        width: 80px;
+        border: 2px solid white;
+        border-radius: 50%;
+        margin-left: 37%;
+        margin-top: 2%;
     }
 
     .bounce-enter-active {
@@ -217,20 +224,57 @@
     .card-body {
         padding: 0.35rem;
     }
+    .botao-limpar-busca {
+        cursor: pointer;
+        position: absolute;
+        right: 17px;
+        top: 15px;
+        border: 0;
+        height: 38px;
+        width: 33px;
+        padding-top: 5px;
+        padding-right: 7px;
+    }
+    .botao-limpar-busca > .close {
+        opacity: .2;
+    }
 
     [v-cloak] { display: none; }
 </style>
 
 <div id="app" v-cloak>
+    <b-modal ref="modalCardsRef" hide-footer title="Gravar Estimativa">
+        <div class="d-block text-center">
+            <div v-if="!cards.length">Carregando...</div>
+            <div v-else>
+                <div class="botao-limpar-busca" v-if="cards_filtro_titulo !== ''" @click="cards_filtro_titulo = ''">
+                    <span class="close">×</span>
+                </div>
+                <b-form-input v-model="cards_filtro_titulo" type="search" placeholder="Filtrar cartões..." ref="cardsFiltroTituloRef"></b-form-input>
+                <b-form-checkbox v-model="cards_ocultar_com_estimativa" style="margin-bottom: 1em">
+                    Ocultar cards com estimativa
+                </b-form-checkbox>
+            </div>
+            <b-list-group>
+                <b-list-group-item button v-for="card of cardsComOuSemEstimativa" :key="card.id" @click="gravarEstimativa(card.id)">{{ card.name }}</b-list-group-item>
+            </b-list-group>
+        </div>
+        <b-btn class="mt-3" variant="outline-danger" block @click="$refs.modalCardsRef.hide()">Cancelar</b-btn>
+    </b-modal>
+
     <transition name="bounce">
         <div v-if="categorias.length" class="estimativa" @click="abrirResetPanel" :class="{'reset-open': reset_flag, 'bounce-enter-active': bounce_estimativa_flag}">
-            <span v-if="reset_flag">(</span>{{ peso }}<span v-if="reset_flag">)</span>
+            <div :class="{'peso-open': reset_flag}">{{ peso }}</div>
             <span class="exata" v-if="false && !reset_flag && estimativa && peso !== estimativa">{{ estimativa }}</span>
             <transition name="bounce">
                 <div v-if="reset_flag" style="display: inline-block">
                     &nbsp; Reiniciar?
                     <b-btn size="sm" @click="resetar">Sim</b-btn>
                     <b-btn>Não</b-btn>
+
+                    <b-button @click="abrirModalCards">
+                        Gravar Estimativa
+                    </b-button>
                 </div>
             </transition>
         </div>
@@ -242,7 +286,7 @@
     </div>
     <br><br>
     <transition name="bounce-quick">
-        <div v-if="barra_progresso < 120" class="mx-auto barra-progresso">
+        <div v-if="barra_progresso < 110" class="mx-auto barra-progresso">
             <b-progress :value="barra_progresso" variant="info" striped :animated="true" class="mb-2"></b-progress>
         </div>
     </transition>
@@ -314,7 +358,7 @@
     }).database();
     const partesRef = db.ref('partes');
 
-    new Vue({
+    var app = new Vue({
         el: '#app',
         firebase: {
             categorias: partesRef
@@ -335,7 +379,13 @@
             ],
             categorias: [], // para que a prop firebase seja reativa
             show_componente: {},
-            barra_progresso: 0
+            barra_progresso: 0,
+            // modal
+            cards: [],
+            cards_filtro_titulo: '',
+            cards_ocultar_com_estimativa: true,
+            // loading modal
+            loading: false
         },
         mounted() {
             this.ocultarCategorias();
@@ -346,17 +396,21 @@
         },
         methods: {
             ligarBarraProgresso() {
-                setTimeout(() => {
-                    this.barra_progresso = 70;
+                const progredir = () => {
                     let interval = setInterval(() => {
-                        this.barra_progresso += 5;
+                        this.barra_progresso++;
                         if (this.barra_progresso < 100 && this.categorias.length) {
                             this.barra_progresso = 100;
                         }
-                        if (this.barra_progresso >= 120) {
+                        if (this.barra_progresso >= 110) {
                             clearInterval(interval);
                         }
                     }, 100);
+                };
+
+                setTimeout(() => {
+                    this.barra_progresso = 60;
+                    progredir();
                 }, 500);
             },
             ocultarCategorias() {
@@ -385,6 +439,41 @@
             },
             pesoIndividual(parte) {
                 return (parte.valor_edicao || 0) * (parte.valor_conhecimento || 1) * (parte.valor_multiplicador || 1);
+            },
+            parteComPesosComoTexto(parte) {
+                let pesos = '';
+                if (parte.valor_edicao) {
+                    pesos += `[${this.options_tipo_edicao.find(o => o.value === parte.valor_edicao).text}]`;
+                }
+                if (parte.valor_conhecimento) {
+                    pesos += `[${this.options_tipo_conhecimento.find(o => o.value === parte.valor_conhecimento).text}]`;
+                }
+                if (parte.valor_multiplicador) {
+                    pesos += `[${this.options_tipo_multiplicador.find(o => o.value === parte.valor_multiplicador).text}]`;
+                }
+                return `${parte.titulo} ${pesos} - peso: ${this.pesoIndividual(parte)}`;
+            },
+            async abrirModalCards() {
+                this.cards_filtro_titulo = '';
+                this.$refs.modalCardsRef.show();
+                this.cards = [];
+                this.cards = await cardList();
+                Vue.nextTick(() => {
+                    this.$refs.cardsFiltroTituloRef.focus();
+                });
+            },
+            async gravarEstimativa(cardId) {
+                atualizarCardComEstimativas(cardId, this.peso, this.partesEstimadas).catch(e => alert('Erro ao atualizar card com estimativas.\n'+e));
+                this.$refs.modalCardsRef.hide();
+                this.resetar();
+            },
+            cleanup(texto) {
+                return texto.toLowerCase()
+                    .replace(/á/, 'a').replace(/é/, 'e').replace(/í/, 'i').replace(/ó/, 'o').replace(/ú/, 'u')
+                    .replace(/â/, 'a').replace(/ê/, 'e').replace(/î/, 'i').replace(/ô/, 'o').replace(/û/, 'u')
+                    .replace(/ã/, 'a').replace(/õ/, 'o')
+                    .replace(/ä/, 'a').replace(/ë/, 'e').replace(/ï/, 'i').replace(/ö/, 'o').replace(/ü/, 'u')
+                    .replace(/ç/, 'c');
             }
         },
         computed: {
@@ -396,7 +485,7 @@
             estimativa() {
                 return this.categorias.reduce((sum, categoria) => {
                     return sum + Object.values(categoria.partes).reduce((sum, parte) => {
-                        if (parte.valor_edicao && parte.valor_conhecimento)
+                        if (parte.valor_edicao)
                             return sum + this.pesoIndividual(parte);
                         else
                             return sum;
@@ -405,7 +494,25 @@
             },
             peso() {
                 return this.pesos[this.estimativa];
-            }
+            },
+            cardsComOuSemEstimativa() {
+                let cardsFiltradosPorTitulo = this.cards.filter(card => this.cleanup(card.name).includes(this.cleanup(this.cards_filtro_titulo)));
+                if (!this.cards_ocultar_com_estimativa) {
+                    return cardsFiltradosPorTitulo;
+                }
+                return cardsFiltradosPorTitulo.filter(card => !card.name.match(ESTIMATIVA_NO_NOME_REGEX));
+            },
+            partesEstimadas() {
+                return this.categorias.reduce((partesEstimadas, categoria) => {
+                    let partesDestaCategoria = Object.values(categoria.partes).reduce((partes, parte) => {
+                        return !parte.valor_edicao ? partes : [...partes, this.parteComPesosComoTexto(parte)];
+                    }, []);
+                    if (partesDestaCategoria.length) {
+                        return [...partesEstimadas, {titulo: categoria.titulo, partes: partesDestaCategoria}];
+                    }
+                    return partesEstimadas;
+                }, []);
+            },
         },
         watch: {
             peso() {
