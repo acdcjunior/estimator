@@ -4,7 +4,10 @@
 //     token: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
 // }), key).toString();
 const ciphertext = 'U2FsdGVkX1+1r2JGaEw+UbwC3O9thMoHDdfaRxcNgXDABPVQ6RcQvjCpGEBkHagHpb+KY5GhNfe0J+V2e6JXmjKY6rVH4x9HyrmrZZsQnbtu1r+ZFrYxCAkk+laaMDnLBBteOF+RWRBO5rOSohs4ZkEQ247yDfDsfQfwDqoYg6tWdsgrpeDAMWdEtXmq6GIOOtcW4lsd8nHqof5OCHj+PFSH15lc8X29x0Ne3f+J2n8=';
-const config = JSON.parse(CryptoJS.AES.decrypt(ciphertext, localStorage.getItem('key')).toString(CryptoJS.enc.Utf8));
+
+function carregarConfig() {
+    window.config = JSON.parse(CryptoJS.AES.decrypt(ciphertext, localStorage.getItem('storage_key')).toString(CryptoJS.enc.Utf8));
+}
 
 async function cardInfo(cardId) {
     let {data: card} = await axios.get(`https://api.trello.com/1/cards/${cardId}?key=${config.key}&token=${config.token}`);

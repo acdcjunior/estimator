@@ -251,7 +251,7 @@
                     <span class="close">×</span>
                 </div>
                 <b-form-input v-model="cards_filtro_titulo" type="search" placeholder="Filtrar cartões..." ref="cardsFiltroTituloRef"></b-form-input>
-                <b-form-checkbox v-model="cards_ocultar_com_estimativa" style="margin-bottom: 1em">
+                <b-form-checkbox v-model="cards_ocultar_com_estimativa" style="margin-bottom: 1em; margin-top: 0.5em;">
                     Ocultar cards com estimativa
                 </b-form-checkbox>
             </div>
@@ -349,6 +349,18 @@
             </div>
         </div>
     </transition>
+
+    <b-modal ref="modalStorageKey" hide-header hide-footer>
+        <b-form-input type="password"
+                      placeholder="Qual a chave?"
+                      v-model="storage_key" autofocus>
+        </b-form-input>
+        <b-btn class="mt-3" variant="primary" block @click="gravarStorageKey" :disabled="!(storage_key || '').length">Ok</b-btn>
+        <b-btn class="mt-3" variant="outline-danger" block @click="$refs.modalStorageKey.hide()">Cancelar</b-btn>
+        <b-list-group v-if="storage_key_text" style="margin-top: 15px">
+            <b-list-group-item variant="danger">{{ storage_key_text }}</b-list-group-item>
+        </b-list-group>
+    </b-modal>
 </div>
 
 
@@ -384,8 +396,10 @@
             cards: [],
             cards_filtro_titulo: '',
             cards_ocultar_com_estimativa: true,
-            // loading modal
-            loading: false
+            // modalStorageKey
+            storage_key_text: '',
+            storage_key: null,
+            storage_callback: null
         },
         mounted() {
             this.ocultarCategorias();
@@ -395,23 +409,56 @@
             for (let i = 41; i <= 999; i++) this.pesos[i] = '∞';
         },
         methods: {
+            verificarStorageKey(callback) {
+                if (!this.isStorageKeyValida()) {
+                    this.storage_key = '';
+                    this.storage_key_text = '';
+                    this.$refs.modalStorageKey.show();
+                    this.storage_callback = callback;
+                } else {
+                    callback();
+                }
+            },
+            gravarStorageKey() {
+                localStorage.setItem('storage_key', this.storage_key);
+                if (!this.isStorageKeyValida()) {
+                    this.storage_key_text = 'A chave fornecida é inválida.';
+                } else {
+                    this.$refs.modalStorageKey.hide();
+                    this.storage_callback();
+                }
+            },
+            isStorageKeyValida() {
+                if (!localStorage.getItem('storage_key')) {
+                    return false;
+                }
+                try {
+                    carregarConfig();
+                } catch (e) {
+                    return false;
+                }
+                return !!window.config['idList'];
+            },
             ligarBarraProgresso() {
-                const progredir = () => {
-                    let interval = setInterval(() => {
-                        this.barra_progresso++;
-                        if (this.barra_progresso < 100 && this.categorias.length) {
-                            this.barra_progresso = 100;
-                        }
-                        if (this.barra_progresso >= 110) {
-                            clearInterval(interval);
-                        }
-                    }, 100);
-                };
+                return new Promise(resolve => {
+                    const progredir = () => {
+                        let interval = setInterval(() => {
+                            this.barra_progresso++;
+                            if (this.barra_progresso < 100 && this.categorias.length) {
+                                this.barra_progresso = 100;
+                            }
+                            if (this.barra_progresso >= 110) {
+                                clearInterval(interval);
+                                resolve();
+                            }
+                        }, 100);
+                    };
 
-                setTimeout(() => {
-                    this.barra_progresso = 60;
-                    progredir();
-                }, 500);
+                    setTimeout(() => {
+                        this.barra_progresso = 60;
+                        progredir();
+                    }, 500);
+                });
             },
             ocultarCategorias() {
                 this.categorias.forEach(categoria => {
@@ -454,12 +501,14 @@
                 return `${parte.titulo} ${pesos} - peso: ${this.pesoIndividual(parte)}`;
             },
             async abrirModalCards() {
-                this.cards_filtro_titulo = '';
-                this.$refs.modalCardsRef.show();
-                this.cards = [];
-                this.cards = await cardList();
-                Vue.nextTick(() => {
-                    this.$refs.cardsFiltroTituloRef.focus();
+                this.verificarStorageKey(async () => {
+                    this.cards_filtro_titulo = '';
+                    this.$refs.modalCardsRef.show();
+                    this.cards = [];
+                    this.cards = await cardList();
+                    Vue.nextTick(() => {
+                        this.$refs.cardsFiltroTituloRef.focus();
+                    });
                 });
             },
             async gravarEstimativa(cardId) {
