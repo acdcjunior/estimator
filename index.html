@@ -257,9 +257,10 @@
                     <span class="close">×</span>
                 </div>
                 <b-form-input v-model="cards_filtro_titulo" type="search" placeholder="Filtrar cartões..." ref="cardsFiltroTituloRef"></b-form-input>
-                <b-form-checkbox v-model="cards_ocultar_com_estimativa" style="margin-bottom: 1em; margin-top: 0.5em;">
-                    Ocultar cards com estimativa <span style="color: lightgrey">&emsp; {{ cards.length - cardsComOuSemEstimativa.length }} cards filtrados.</span>
+                <b-form-checkbox v-model="cards_ocultar_com_estimativa" style="margin-top: 0.5em;">
+                    Ocultar cards com estimativa
                 </b-form-checkbox>
+                <div style="color: lightgrey; margin-bottom: .5em;">{{ cards.length - cardsComOuSemEstimativa.length }} cards filtrados.</div>
             </div>
             <b-list-group>
                 <b-list-group-item button v-for="card of cardsComOuSemEstimativa" :key="card.id" @click="gravarEstimativa(card.id)" class="trello">{{ card.name }}</b-list-group-item>
