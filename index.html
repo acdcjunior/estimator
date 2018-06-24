@@ -258,7 +258,7 @@
                 </div>
                 <b-form-input v-model="cards_filtro_titulo" type="search" placeholder="Filtrar cartões..." ref="cardsFiltroTituloRef"></b-form-input>
                 <b-form-checkbox v-model="cards_ocultar_com_estimativa" style="margin-bottom: 1em; margin-top: 0.5em;">
-                    Ocultar cards com estimativa
+                    Ocultar cards com estimativa <span style="color: lightgrey">&emsp; {{ cards.length - cardsComOuSemEstimativa.length }} cards filtrados.</span>
                 </b-form-checkbox>
             </div>
             <b-list-group>
