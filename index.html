@@ -41,18 +41,18 @@
 
     .peso-individual {
         display: inline-block;
-        width: 30px;
+        width: 40px;
         padding-right: 1px;
         font-weight: bold;
         text-align: center;
         border: 2px solid black;
         border-radius: 15px;
-        height: 28px;
-        line-height: 22px;
-        margin-top: 3px;
+        height: 30px;
+        line-height: 20px;
+        padding-top: 1px;
+        margin-left: 10px;
     }
 
-    /*@media (max-width: 600px) {*/
     div.estimativa {
         top: 0.3em;
         left: 0.3em;
@@ -62,10 +62,9 @@
     }
 
     div.estimativa.reset-open {
-        width: 356px;
+        width: 340px;
         height: 83px;
     }
-    /*}*/
 
     @media (min-width: 600px) {
         .btn.btn-variavel {
@@ -178,6 +177,16 @@
     .tem-parte-selecionada {
         color: yellow !important;
     }
+    .card-body {
+        padding: 0.35rem;
+    }
+    .botao-apagar {
+        line-height: 50%;
+        padding-bottom: 6px;
+        border-radius: 50%;
+        height: 29px;
+        width: 29px;
+    }
 
     [v-cloak] { display: none; }
 </style>
@@ -239,9 +248,17 @@
                                                 @change="updateParte(categoria, parteKey, 'valor_conhecimento', $event)"
                                         />
                                     </b-form-group>
+                                    <b-form-group style="display: inline-block" v-show="parte.valor_edicao">
+                                        <b-form-radio-group
+                                                buttons :options="options_tipo_multiplicador" size="variavel"
+                                                button-variant="outline-warning"
+                                                :checked="parte.valor_multiplicador"
+                                                @change="updateParte(categoria, parteKey, 'valor_multiplicador', $event)"
+                                        />
+                                    </b-form-group>
                                     <span v-if="parte.valor_edicao">
-                                      <span class="peso-individual">{{ (parte.valor_edicao || 0) * (parte.valor_conhecimento || 1) || '' }}</span>
-                                      <b-button variant="danger" size="sm" @click="clear(categoria, parteKey)">×</b-button>
+                                      <span class="peso-individual">{{ pesoIndividual(parte) }}</span>
+                                      <b-button variant="danger" size="sm" class="botao-apagar" @click="clear(categoria, parteKey)">×</b-button>
                                     </span>
 
                                 </b-list-group-item>
@@ -277,6 +294,9 @@
             ],
             options_tipo_conhecimento: [
                 {text: 'Conhecido', value: 1}, {text: 'Desconhecido', value: 2}, {text: 'Desafio', value: 4}
+            ],
+            options_tipo_multiplicador: [
+                {text: 'x1', value: 1}, {text: 'x2', value: 2}, {text: 'x3', value: 3}
             ],
             categorias: [], // para que a prop firebase seja reativa
             show_componente: {},
@@ -326,6 +346,10 @@
             clear(categoria, parteKey) {
                 this.updateParte(categoria, parteKey, 'valor_edicao', 0);
                 this.updateParte(categoria, parteKey, 'valor_conhecimento', 1);
+                this.updateParte(categoria, parteKey, 'valor_multiplicador', 1);
+            },
+            pesoIndividual(parte) {
+                return (parte.valor_edicao || 0) * (parte.valor_conhecimento || 1) * (parte.valor_multiplicador || 1);
             }
         },
         computed: {
@@ -338,7 +362,7 @@
                 return this.categorias.reduce((sum, categoria) => {
                     return sum + Object.values(categoria.partes).reduce((sum, parte) => {
                         if (parte.valor_edicao && parte.valor_conhecimento)
-                            return sum + (parte.valor_edicao || 0) * (parte.valor_conhecimento || 1);
+                            return sum + this.pesoIndividual(parte);
                         else
                             return sum;
                     }, 0);
