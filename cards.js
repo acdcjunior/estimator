@@ -1,7 +1,7 @@
 
-let ciphertext = 'U2FsdGVkX1+1r2JGaEw+UbwC3O9thMoHDdfaRxcNgXDABPVQ6RcQvjCpGEBkHagHpb+KY5GhNfe0J+V2e6JXmjKY6rVH4x9HyrmrZZsQnbtu1r+ZFrYxCAkk+laaMDnLBBteOF+RWRBO5rOSohs4ZkEQ247yDfDsfQfwDqoYg6tWdsgrpeDAMWdEtXmq6GIOOtcW4lsd8nHqof5OCHj+PFSH15lc8X29x0Ne3f+J2n8=';
+let ciphertext = 'U2FsdGVkX19GYfGuVL2yBP7Op+Xl37nIKBdVjFtqj9gGz8+Mrr10S9bzjsMgdqiiy1e8wFYrB85dRnG0OYflPhUo4spuI+K0w6ILGdvy7qQpHEuEQd3LVk8jyxI/PS+HlfO/TQfQmYfXGUKuBd+zIm6GM5cEco0FrzdmYHOnraVUatc2hF5ZNciz0LZVXg55oEI9rMHK4QIZi9r71hwEEGbVz5ZeyZ+rdKcimneVzdk=';
 if (document.location.href.includes("?prod")) {
-    ciphertext = "U2FsdGVkX1+inH1Wbh2Uq0EXRDmq+vAWPIK5SYUV5Q5ac5cHpwcVCg7gh8ZTRClXN7tdmaSnpmT9AGrW6RYlNt5CS1MNWGDq9ici08uqneGN2hPnp/t8FjHMZqOK2rDDNexN3KHsfL+ofpMAUnYgPIIkFaFCbsjnB6Stqi4UCfXZsYIM0dTo92JNq4deNDoOKWmXKBpVf+X/dVgNffkzwY5boNH1pg8hG1mGah4HuQ0=";
+    ciphertext = "U2FsdGVkX1856Lmcvqx9BScXlLT8UlsGFtTSwxPwtZtwcfoZqgud30M2KXho2LQ3q/sDtH75CXmq5T3jgAi/1ag5ksNiyZUHozN54RcyOBuU5nElEUbys36BMwcIpZ0jeBhUQr+NynKpCt6QCilegpoA9xmkYncNYwwslt0v+SH9j4sokwmBaogwWh6cVjw7RXViESTmYYKMzpGGzsd6LPcl+mtxw8nQ7hsjJwAyfVo=";
 }
 
 function carregarConfig() {
