@@ -244,6 +244,11 @@
         color: black;
         padding: 7px 5px 5px 5px;
     }
+    .alert-salvo {
+        position: absolute;
+        top: 7px;
+        right: 7px;
+    }
 
     [v-cloak] { display: none; }
 </style>
@@ -368,6 +373,12 @@
             <b-list-group-item variant="danger">{{ storage_key_text }}</b-list-group-item>
         </b-list-group>
     </b-modal>
+
+    <transition name="bounce-quick">
+        <b-alert v-if="salvo_alert_show" show dismissible variant="primary" @dismissed="salvo_alert_show = false" class="alert-salvo">
+            Estimativas enviadas!
+        </b-alert>
+    </transition>
 </div>
 
 
@@ -406,7 +417,9 @@
             // modalStorageKey
             storage_key_text: '',
             storage_key: null,
-            storage_callback: null
+            storage_callback: null,
+            // salvo alert
+            salvo_alert_show: false
         },
         mounted() {
             this.ocultarCategorias();
@@ -520,6 +533,8 @@
             },
             async gravarEstimativa(cardId) {
                 atualizarCardComEstimativas(cardId, this.peso, this.partesEstimadas).catch(e => alert('Erro ao atualizar card com estimativas.\n'+e));
+                setTimeout(() => { this.salvo_alert_show = true; }, 350);
+                setTimeout(() => { this.salvo_alert_show = false; }, 3000);
                 this.$refs.modalCardsRef.hide();
                 this.resetar();
             },
