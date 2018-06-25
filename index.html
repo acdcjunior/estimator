@@ -188,6 +188,23 @@
             transform: scale(1, 1);
         }
     }
+    .slide-down-enter-active {
+        animation: slide-down-in .1s;
+    }
+    .slide-down-leave-active {
+        animation: slide-down-in .1s reverse;
+    }
+    @keyframes slide-down-in {
+        0% {
+            transform: scale(1, 0);
+        }
+        50% {
+            transform: scale(1, 0.5);
+        }
+        100% {
+            transform: scale(1, 1);
+        }
+    }
 
     .exata {
         display: inline-block;
@@ -326,31 +343,35 @@
                                                 @change="updateParte(categoria, parteKey, 'valor_edicao', $event)"
                                         />
                                     </b-form-group>
-                                    <b-form-group style="display: inline-block" v-show="parte.valor_edicao">
-                                        <b-form-radio-group
-                                                buttons :options="options_tipo_conhecimento" size="variavel"
-                                                button-variant="outline-primary"
-                                                :checked="parte.valor_conhecimento"
-                                                @change="updateParte(categoria, parteKey, 'valor_conhecimento', $event)"
-                                        />
-                                    </b-form-group>
-                                    <b-form-group style="display: inline-block" v-show="parte.valor_edicao">
-                                        <b-form-radio-group
-                                                buttons :options="options_tipo_multiplicador" size="variavel"
-                                                button-variant="outline-warning"
-                                                :checked="parte.valor_multiplicador"
-                                                @change="updateParte(categoria, parteKey, 'valor_multiplicador', $event)"
-                                        />
-                                    </b-form-group>
-                                    <span v-if="parte.valor_edicao" style="display: inline-table">
-                                      <span class="peso-individual">
-                                          <span class="peso-individual-circulo">&nbsp;</span>
-                                          <span class="peso-individual-numero">{{ pesoIndividual(parte) }}</span>
-                                      </span>
-                                      <b-button variant="danger" size="sm" class="botao-apagar" @click="clear(categoria, parteKey)">
-                                          <span class="botao-apagar-x">×</span>
-                                      </b-button>
-                                    </span>
+                                    <transition name="slide-down">
+                                        <div style="display: inline-block; height: 32px" v-if="parte.valor_edicao">
+                                            <b-form-group style="display: inline-block">
+                                                <b-form-radio-group
+                                                        buttons :options="options_tipo_conhecimento" size="variavel"
+                                                        button-variant="outline-primary"
+                                                        :checked="parte.valor_conhecimento"
+                                                        @change="updateParte(categoria, parteKey, 'valor_conhecimento', $event)"
+                                                />
+                                            </b-form-group>
+                                            <b-form-group style="display: inline-block">
+                                                <b-form-radio-group
+                                                        buttons :options="options_tipo_multiplicador" size="variavel"
+                                                        button-variant="outline-warning"
+                                                        :checked="parte.valor_multiplicador"
+                                                        @change="updateParte(categoria, parteKey, 'valor_multiplicador', $event)"
+                                                />
+                                            </b-form-group>
+                                            <span style="display: inline-table">
+                                              <span class="peso-individual">
+                                                  <span class="peso-individual-circulo">&nbsp;</span>
+                                                  <span class="peso-individual-numero">{{ pesoIndividual(parte) }}</span>
+                                              </span>
+                                              <b-button variant="danger" size="sm" class="botao-apagar" @click="clear(categoria, parteKey)">
+                                                  <span class="botao-apagar-x">×</span>
+                                              </b-button>
+                                            </span>
+                                        </div>
+                                    </transition>
 
                                 </b-list-group-item>
                             </b-list-group>
